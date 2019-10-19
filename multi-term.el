@@ -6,7 +6,7 @@
 ;; Copyright (C) 2010, ahei, all rights reserved.
 ;; Created: <2008-09-19 23:02:42>
 ;; Version: 1.4
-;; Last-Updated: Fri Oct 18 02:02:54 2019 (-0400)
+;; Last-Updated: Sat Oct 19 14:01:48 2019 (-0400)
 ;; URL: http://www.emacswiki.org/emacs/download/multi-term.el
 ;; Keywords: term, terminal, multiple buffer
 ;; Compatibility: GNU Emacs 23.2.1, GNU Emacs 24.4 (and prereleases)
@@ -126,6 +126,9 @@
 ;;
 
 ;;; Change log:
+;;
+;; 2019/10/19
+;;      * Support tramp
 ;;
 ;; 2017/03/03
 ;;      * Switch to cl-lib
@@ -453,7 +456,7 @@ Will prompt you shell name when you type `C-u' before this command."
     (set-buffer term-buffer)
     ;; Internal handle for `multi-term' buffer.
     (multi-term-internal)
-    (multi-term-switch-to-tramp term-buffer)))
+    (multi-term-switch-buffer term-buffer default-directory)))
 
 ;;;###autoload
 (defun multi-term-next (&optional offset)
@@ -622,17 +625,15 @@ Similar to how `quoted-insert' works in a regular buffer."
   ;; Add hook to be sure `term' quit subjob before buffer killed.
   (add-hook 'kill-buffer-hook 'multi-term-kill-buffer-hook))
 
-(defun multi-term-switch-to-tramp (term-buffer)
-  "If we are in `tramp-mode', switch to TERM-BUFFER and switch to the current directory in the remote machine."
-  (if (tramp-tramp-file-p default-directory)
-      (with-parsed-tramp-file-name default-directory path
-        (let ((method (car (cdr (assoc `tramp-login-program (assoc path-method tramp-methods))))))
-          (switch-to-buffer term-buffer)
-          (term-send-raw-string (concat method " " path-user "@" path-host))
-          (term-send-return)
-          (term-send-raw-string (concat "cd " path-localname))
-          (term-send-return)))
-    (switch-to-buffer term-buffer)))
+(defun multi-term-switch-buffer (term-buffer default-dir)
+  "If we are in `tramp-mode', switch to TERM-BUFFER based on DEFAULT-DIR."
+  (switch-to-buffer term-buffer)
+  (when (tramp-tramp-file-p default-dir)
+    (with-parsed-tramp-file-name default-dir path
+      (let ((method (car (cdr (assoc `tramp-login-program (assoc path-method tramp-methods))))))
+        (switch-to-buffer term-buffer)
+        (term-send-raw-string (concat method " " path-user "@" path-host "\C-m"))
+        (term-send-raw-string (concat "cd " path-localname "\C-m"))))))
 
 (defun multi-term-get-buffer (&optional special-shell dedicated-window)
   "Get term buffer.
