@@ -628,6 +628,7 @@ Similar to how `quoted-insert' works in a regular buffer."
 (defun multi-term-switch-buffer (term-buffer default-dir)
   "If we are in `tramp-mode', switch to TERM-BUFFER based on DEFAULT-DIR."
   (switch-to-buffer term-buffer)
+  (require 'tramp)
   (when (tramp-tramp-file-p default-dir)
     (with-parsed-tramp-file-name default-dir path
       (let ((method (cadr (assoc `tramp-login-program (assoc path-method tramp-methods)))))
