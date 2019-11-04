@@ -5,8 +5,8 @@
 ;; Copyright (C) 2008 ~ 2016 Andy Stewart, all rights reserved.
 ;; Copyright (C) 2010, ahei, all rights reserved.
 ;; Created: <2008-09-19 23:02:42>
-;; Version: 1.4
-;; Last-Updated: Sat Oct 19 22:14:47 2019 (-0400)
+;; Version: 1.5
+;; Last-Updated: 2019-11-04 19:55:15
 ;; URL: http://www.emacswiki.org/emacs/download/multi-term.el
 ;; Keywords: term, terminal, multiple buffer
 ;; Compatibility: GNU Emacs 23.2.1, GNU Emacs 24.4 (and prereleases)
@@ -126,6 +126,9 @@
 ;;
 
 ;;; Change log:
+;;
+;; 2019/11/04
+;;      * Fix #2: use featurep test tramp library is load.
 ;;
 ;; 2019/10/19
 ;;      * Support tramp
@@ -628,7 +631,9 @@ Similar to how `quoted-insert' works in a regular buffer."
 (defun multi-term-switch-buffer (term-buffer default-dir)
   "If we are in `tramp-mode', switch to TERM-BUFFER based on DEFAULT-DIR."
   (switch-to-buffer term-buffer)
-  (when (tramp-tramp-file-p default-dir)
+  ;; Just test tramp file when library `tramp' is loaded.
+  (when (and (featurep 'tramp)
+             (tramp-tramp-file-p default-dir))
     (with-parsed-tramp-file-name default-dir path
       (let ((method (cadr (assoc `tramp-login-program (assoc path-method tramp-methods)))))
         (term-send-raw-string (concat method " " path-user "@" path-host "\C-m"))
